@@ -1164,7 +1164,11 @@ impl NodeConfig {
         // configure the revm environment
 
         let mut cfg = CfgEnv::default();
-        cfg.spec = self.get_hardfork().into();
+        // Set the spec together with its spec-dependent gas params. Assigning `cfg.spec`
+        // directly leaves `cfg.gas_params` at the default-spec table, which silently runs
+        // pre-Amsterdam gas costs under `--hardfork amsterdam` (EIP-8037 repricing lives in
+        // `GasParams::new_spec(AMSTERDAM)`).
+        cfg.set_spec_and_mainnet_gas_params(self.get_hardfork().into());
 
         cfg.chain_id = self.get_chain_id();
         cfg.limit_contract_code_size = self.code_size_limit;
@@ -1419,7 +1423,8 @@ latest block number: {latest_block}"
             && let Some(hardfork) =
                 FoundryHardfork::from_chain_and_timestamp(chain_id, block.header.timestamp())
         {
-            evm_env.cfg_env.spec = SpecId::from(hardfork);
+            // Keep gas params in sync with the auto-detected spec (see note in `setup`).
+            evm_env.cfg_env.set_spec_and_mainnet_gas_params(SpecId::from(hardfork));
             self.hardfork = Some(hardfork);
         }
 

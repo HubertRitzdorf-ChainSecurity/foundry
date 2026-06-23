@@ -84,7 +84,8 @@ pub struct NodeArgs {
 
     /// The EVM hardfork to use.
     ///
-    /// Choose the hardfork by name, e.g. `prague`, `cancun`, `shanghai`, `paris`, `london`, etc...
+    /// Choose the hardfork by name, e.g. `amsterdam`, `osaka`, `prague`, `cancun`, `shanghai`,
+    /// `paris`, `london`, etc...
     /// [default: latest]
     #[arg(long)]
     pub hardfork: Option<String>,
@@ -971,6 +972,19 @@ mod tests {
         let args: NodeArgs = NodeArgs::parse_from(["anvil", "--hardfork", "berlin"]);
         let config = args.into_node_config().unwrap();
         assert_eq!(config.hardfork, Some(EthereumHardfork::Berlin.into()));
+    }
+
+    #[test]
+    fn can_parse_amsterdam_hardfork() {
+        use revm::primitives::hardfork::SpecId;
+        // Case-insensitive parsing of the latest Ethereum hardfork.
+        for name in ["amsterdam", "Amsterdam", "AMSTERDAM"] {
+            let args: NodeArgs = NodeArgs::parse_from(["anvil", "--hardfork", name]);
+            let config = args.into_node_config().unwrap();
+            assert_eq!(config.hardfork, Some(EthereumHardfork::Amsterdam.into()));
+            // The selected hardfork must map to the Amsterdam EVM spec.
+            assert_eq!(SpecId::from(config.get_hardfork()), SpecId::AMSTERDAM);
+        }
     }
 
     #[test]
